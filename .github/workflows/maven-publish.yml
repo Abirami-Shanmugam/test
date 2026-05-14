@@ -1,4 +1,4 @@
-name: Maven Package Workflow
+name: Private Maven Build and Package
 
 on:
   push:
@@ -9,9 +9,14 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    
+    # 1. Define secure environment variables for your Java application
+    env:
+      DB_URL: ${{ secrets.PRIVATE_DATABASE_URL }}
+      DB_PASSWORD: ${{ secrets.PRIVATE_DATABASE_PASSWORD }}
 
     steps:
-    - name: Checkout repository code
+    - name: Checkout private repository code
       uses: actions/checkout@v4
 
     - name: Set up JDK 17
@@ -21,5 +26,14 @@ jobs:
         distribution: 'temurin'
         cache: maven
 
+    # 2. Run your build using the private credentials defined above
     - name: Build and Test with Maven
       run: mvn -B package --file pom.xml
+
+    # 3. Securely archive your compiled app so it stays private inside GitHub
+    - name: Upload compiled application artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: private-java-app
+        path: target/*.jar
+        retention-days: 7  # Automatically deletes old builds to save your private storage space
